@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <title>Hellosports Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+
+  <!-- Shaka Player -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.1.1/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.1.1/controls.min.css" crossorigin="anonymous" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #player-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .watermark-link {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 9999;
+      background: #D50000;
+      color: white;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 4px;
+      text-decoration: none;
+      font-family: sans-serif;
+      animation: pulse 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .watermark-link:hover {
+      background: #FF1744;
+    }
+  </style>
+</head>
+  
+<body bgcolor='black' style='margin:0' oncontextmenu='return false' onkeydown='return false' onmousedown='return false'>
+
+  <!-- Watermark -->
+  <a href="https://www.Hellosports.live" target="_blank" class="watermark-link">Hellosports.live</a>
+
+  <!-- Player Container -->
+  <div id="player-container" data-shaka-player-container>
+    <video autoplay data-shaka-player id="video"></video>
+  </div>
+
+  <script>
+    async function init() {
+      const video = document.getElementById('video');
+      const ui = video['ui'];
+      const controls = ui.getControls();
+      const player = controls.getPlayer();
+
+      // DRM (ClearKey)
+      player.configure({
+        drm: {
+          clearKeys: {
+            'd48b6088253c443eb94d27cb7828f707': 'e9776141f9e949273a072b0e035070ab'
+          }
+        }
+      });
+
+      player.setTextTrackVisibility(true); // turn on subtitle
+
+      window.player = player;
+      window.ui = ui;
+
+      player.addEventListener('error', onPlayerErrorEvent);
+      controls.addEventListener('error', onUIErrorEvent);
+
+      try {
+        await player.load("https://unifi-live2.secureswiftcontent.com/Content/DASH/Live/channel(Bein1)/master.mpd");
+        console.log("✅ Stream loaded!");
+
+        // AUTO SELECT MALAY SUBTITLE
+        const tracks = player.getTextTracks();
+        console.log("All subtitle tracks:", tracks);
+
+        const malayTrack = tracks.find(t =>
+          t.language === "ms" ||
+          t.language === "zsm" ||
+          t.language === "msa"
+        );
+
+        if (malayTrack) {
+          player.selectTextTrack(malayTrack);
+          player.setTextTrackVisibility(true);
+          console.log("🇲🇾 Auto-selected Malay subtitle");
+        } else {
+          console.warn("⚠️ Malay subtitle not found.");
+        }
+
+      } catch (error) {
+        onPlayerError(error);
+      }
+    }
+
+    function onPlayerErrorEvent(errorEvent) { onPlayerError(errorEvent.detail); }
+    function onPlayerError(error) { console.error("Error code", error.code, "object", error); }
+    function onUIErrorEvent(errorEvent) { onPlayerError(errorEvent.detail); }
+    function initFailed(errorEvent) { console.error("❌ UI load failed!"); }
+
+    document.addEventListener("shaka-ui-loaded", init);
+    document.addEventListener("shaka-ui-load-failed", initFailed);
+
+    // Auto adjust fullscreen on window resize
+    window.addEventListener("resize", () => {
+      const container = document.getElementById("player-container");
+      container.style.width = window.innerWidth + "px";
+      container.style.height = window.innerHeight + "px";
+    });
+  </script>
+
+</body>
+</html>
