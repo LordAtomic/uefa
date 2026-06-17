@@ -6,42 +6,82 @@
   <meta name="referrer" content="no-referrer">
   <title>Hello Sports Player</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.6.2/plyr.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
       width: 100%;
       height: 100%;
       background: #000;
       overflow: hidden;
     }
-
     .player-wrap {
       width: 100%;
       aspect-ratio: 16/9;
       background: #000;
+      position: relative;
     }
-
     .player-wrap video {
       width: 100%;
       height: 100%;
       object-fit: contain;
       background: #000;
     }
-
     .plyr--video .plyr__control--overlaid {
       left: 50% !important;
       top: 50% !important;
       transform: translate(-50%, -50%) !important;
     }
+
+    /* ── HELLOSPORTS watermark ── */
+    #hx-watermark {
+      position: absolute;
+      left: 50%;
+      bottom: 62px;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.42;
+      pointer-events: none;
+      transition: opacity .3s, bottom .3s;
+      font-family: 'Rajdhani', sans-serif;
+      text-align: center;
+    }
+    #hx-watermark .wm-rule {
+      width: 18px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e8001d);
+    }
+    #hx-watermark .wm-rule.right {
+      background: linear-gradient(90deg, #e8001d, transparent);
+    }
+    #hx-watermark .wm-text { display: flex; flex-direction: column; align-items: center; }
+    #hx-watermark .wm-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 4px;
+      color: #fff;
+    }
+    #hx-watermark .wm-name .r { color: #e8001d; }
+    #hx-watermark .wm-url {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: #c8d0da;
+      margin-top: 2px;
+    }
+    .plyr:fullscreen #hx-watermark,
+    .plyr:-webkit-full-screen #hx-watermark {
+      bottom: 70px;
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
-
   <div class="player-wrap">
     <video id="player" controls playsinline webkit-playsinline preload="metadata"></video>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="https://cdn.plyr.io/3.6.2/plyr.polyfilled.js"></script>
   <script>
@@ -49,30 +89,38 @@
       const video = document.getElementById('player');
       const params = new URLSearchParams(location.search);
       const videoURL = params.get('x');
-
       if (!videoURL) return;
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-      if (isIOS) {
-        video.src = videoURL;
-        new Plyr(video);
-        return;
+      function addWatermark(player) {
+        const wm = document.createElement('div');
+        wm.id = 'hx-watermark';
+        wm.innerHTML =
+          '<span class="wm-rule"></span>' +
+          '<span class="wm-text">' +
+            '<span class="wm-name">HELLO<span class="r">SPORTS</span></span>' +
+            '<span class="wm-url">hellosports.io</span>' +
+          '</span>' +
+          '<span class="wm-rule right"></span>';
+        player.elements.container.appendChild(wm);
       }
 
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        video.src = videoURL;
+        const player = new Plyr(video);
+        addWatermark(player);
+        return;
+      }
       if (!Hls.isSupported()) return;
-
       const hls = new Hls();
       hls.loadSource(videoURL);
       hls.attachMedia(video);
-
       hls.on(Hls.Events.MANIFEST_PARSED, function () {
         const qualities = [];
         hls.levels.forEach(function (level) {
           if (!qualities.includes(level.height)) qualities.push(level.height);
         });
         qualities.sort(function (a, b) { return b - a; });
-
         const player = new Plyr(video, {
           settings: ['quality', 'speed', 'fullscreen'],
           quality: {
@@ -86,7 +134,7 @@
             }
           }
         });
-
+        addWatermark(player);
         document.addEventListener('fullscreenchange', () => {
           if (document.fullscreenElement && screen.orientation?.lock) {
             screen.orientation.lock('landscape').catch(() => {});
@@ -94,7 +142,6 @@
             screen.orientation.unlock();
           }
         });
-
         video.addEventListener('click', function () {
           if (player.playing) player.pause();
           else player.play();
@@ -102,6 +149,5 @@
       });
     })();
   </script>
-
 </body>
 </html>
