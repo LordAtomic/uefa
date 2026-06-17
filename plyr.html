@@ -17,7 +17,7 @@
     }
     .player-wrap {
       width: 100%;
-      aspect-ratio: 16/9;
+      height: 100%;
       background: #000;
       position: relative;
     }
@@ -107,7 +107,9 @@
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       if (isIOS) {
         video.src = videoURL;
-        const player = new Plyr(video);
+        const player = new Plyr(video, {
+          fullscreen: { enabled: true, fallback: true, iosNative: true }
+        });
         addWatermark(player);
         return;
       }
@@ -123,6 +125,7 @@
         qualities.sort(function (a, b) { return b - a; });
         const player = new Plyr(video, {
           settings: ['quality', 'speed', 'fullscreen'],
+          fullscreen: { enabled: true, fallback: true, iosNative: true },
           quality: {
             default: qualities[0] || 720,
             options: qualities,
