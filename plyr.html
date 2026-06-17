@@ -139,52 +139,20 @@
     .b4x-refresh    { background: #e8001d; }
     .b4x-fullscreen { background: #00bfff; }
 
-    /* URL input for demo */
-    .b4x-url-bar {
-      width: 100%;
-      max-width: 960px;
-      display: flex;
-      gap: 8px;
-      padding: 10px 0;
-    }
-    .b4x-url-bar input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background: #222;
-      color: #fff;
-      font-size: 13px;
-    }
-    .b4x-url-bar button {
-      padding: 8px 16px;
-      background: #00bfff;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: 700;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
 
-  <!-- URL input bar (remove this section if embedding with ?b4x= param) -->
-  <div class="b4x-url-bar">
-    <input type="text" id="stream-input" placeholder="Paste .m3u8 stream URL here…" />
-    <button onclick="loadStream()">Load</button>
-  </div>
-
   <div id="b4x-player-root" class="b4x-wrap" data-b4x="">
     <div class="b4x-player">
 
-
+      <a href="https://hellosports.io/" target="_blank" class="b4x-join-btn">JOIN US</a>
 
       <div id="hx-watermark">
         <div class="wm-rule"></div>
         <div class="wm-inner">
           <span class="wm-name"><span class="red">HELLO</span> SPORTS</span>
-          <span class="wm-url">hellosports.com</span>
+          <span class="wm-url">hellosports.io</span>
         </div>
         <div class="wm-rule right"></div>
       </div>
@@ -268,12 +236,6 @@
       });
     }
 
-    function loadStream() {
-      const url = document.getElementById('stream-input').value.trim();
-      if (!url) return alert('Please enter a stream URL.');
-      initPlayer(url);
-    }
-
     // Auto-load from ?b4x= param or data-b4x attribute on page load
     (function () {
       const params = new URLSearchParams(location.search);
@@ -281,10 +243,7 @@
       if (!videoURL) {
         videoURL = document.getElementById('b4x-player-root').dataset.b4x;
       }
-      if (videoURL) {
-        document.getElementById('stream-input').value = videoURL;
-        initPlayer(videoURL);
-      }
+      if (videoURL) initPlayer(videoURL);
     })();
 
     function b4xSharePlayer() {
