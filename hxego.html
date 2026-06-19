@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -16,37 +16,18 @@
       --red-glow: rgba(232,0,29,0.5);
       --bg:       #040506;
     }
-    html, body {
-      width: 100%; height: 100%;
-      background: var(--bg);
-      overflow: hidden;
-      font-family: 'Rajdhani', sans-serif;
-    }
+    html, body { width: 100%; height: 100%; background: var(--bg); overflow: hidden; font-family: 'Rajdhani', sans-serif; }
 
     /* ── Player fills viewport ── */
-    #player-wrap {
-      position: fixed; inset: 0;
-    }
-    #player-wrap video {
-      width: 100%; height: 100%;
-      object-fit: contain;
-      background: #000;
-    }
-    .plyr, .plyr--video {
-      width: 100% !important;
-      height: 100% !important;
-    }
+    #player-wrap { position: fixed; inset: 0; }
+    #player-wrap video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .plyr, .plyr--video { width: 100% !important; height: 100% !important; }
 
-    /* ── Force hide overlaid play button while playing ── */
-    .plyr--playing .plyr__control--overlaid {
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-    /* Also hide it when we auto-start (browser may keep it visible on muted autoplay) */
-    .plyr__control--overlaid {
-      transition: opacity .2s, visibility .2s;
-    }
+    /* ── Hide Plyr overlaid play button while playing / during muted autoplay ── */
+    .plyr--playing .plyr__control--overlaid,
+    .plyr__control--overlaid { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+    /* Show it only when genuinely paused by user */
+    .plyr--paused:not([data-autoloading]) .plyr__control--overlaid { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
 
     /* ── Loader ── */
     #hx-loader {
@@ -58,32 +39,19 @@
     }
     #hx-loader.off { opacity: 0; visibility: hidden; }
 
-    .ld-logo {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      animation: float 2s ease-in-out infinite;
-    }
+    .ld-logo { display: flex; flex-direction: column; align-items: center; gap: 4px; animation: float 2s ease-in-out infinite; }
     @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-    .ld-brand {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 44px; letter-spacing: 5px; color: #fff; line-height: 1;
-    }
+    .ld-brand { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 5px; color: #fff; line-height: 1; }
     .ld-brand .r { color: var(--red); }
-    .ld-domain {
-      font-size: 11px; font-weight: 600; letter-spacing: 5px;
-      color: rgba(255,255,255,.3); text-transform: uppercase;
-    }
+    .ld-domain { font-size: 11px; font-weight: 600; letter-spacing: 5px; color: rgba(255,255,255,.3); text-transform: uppercase; }
 
-    .ld-bar-wrap {
-      width: 220px; height: 3px;
-      background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden;
-    }
+    .ld-bar-wrap { width: 220px; height: 3px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
     .ld-bar {
       height: 100%; width: 0%;
       background: linear-gradient(90deg, var(--red), #ff4d5e);
       box-shadow: 0 0 12px var(--red-glow);
-      border-radius: 2px;
-      transition: width .4s ease;
+      border-radius: 2px; transition: width .4s ease;
     }
     .ld-bar.idle { animation: barSlide 1.8s ease-in-out infinite; }
     @keyframes barSlide {
@@ -93,21 +61,12 @@
     }
 
     .ld-dots { display: flex; gap: 6px; }
-    .ld-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--red); animation: dotB 1.2s ease-in-out infinite;
-    }
+    .ld-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: dotB 1.2s ease-in-out infinite; }
     .ld-dot:nth-child(2) { animation-delay: .2s; }
     .ld-dot:nth-child(3) { animation-delay: .4s; }
-    @keyframes dotB {
-      0%,80%,100% { opacity: .2; transform: scale(.8); }
-      40%          { opacity: 1;  transform: scale(1.2); }
-    }
+    @keyframes dotB { 0%,80%,100% { opacity:.2; transform:scale(.8); } 40% { opacity:1; transform:scale(1.2); } }
 
-    .ld-status {
-      font-size: 11px; font-weight: 600; letter-spacing: 3px;
-      color: rgba(200,208,218,.45); text-transform: uppercase;
-    }
+    .ld-status { font-size: 11px; font-weight: 600; letter-spacing: 3px; color: rgba(200,208,218,.45); text-transform: uppercase; }
 
     /* ── Watermark ── */
     #wm {
@@ -120,25 +79,16 @@
     .wm-rule { width: 18px; height: 1px; background: linear-gradient(90deg, transparent, rgba(232,0,29,.7)); }
     .wm-rule.r { background: linear-gradient(90deg, rgba(232,0,29,.7), transparent); }
     .wm-inner { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-    .wm-name {
-      font-family: 'Bebas Neue', sans-serif; font-size: 14px;
-      letter-spacing: 4px; color: #fff;
-      text-shadow: 0 1px 8px #000, 0 0 24px rgba(0,0,0,.8);
-    }
+    .wm-name { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 4px; color: #fff; text-shadow: 0 1px 8px #000, 0 0 24px rgba(0,0,0,.8); }
     .wm-name .r { color: var(--red); }
-    .wm-url {
-      font-size: 9px; font-weight: 600; letter-spacing: 3px;
-      color: rgba(255,255,255,.55);
-      text-shadow: 0 1px 6px rgba(0,0,0,.9);
-    }
+    .wm-url { font-size: 9px; font-weight: 600; letter-spacing: 3px; color: rgba(255,255,255,.55); text-shadow: 0 1px 6px rgba(0,0,0,.9); }
 
     /* ── Join button ── */
     #join-btn {
       position: fixed; top: 6px; left: 5px; z-index: 300;
       display: block; height: 30px; width: 100px;
       color: #ccc; border: 2px solid #ccc;
-      padding: 1px 0; border-radius: 2px;
-      text-align: center; text-decoration: none;
+      border-radius: 2px; text-align: center; text-decoration: none;
       font-family: 'Rajdhani', sans-serif; font-weight: 700;
       font-size: 13px; line-height: 26px; letter-spacing: 1px;
       background: rgba(0,0,0,.35);
@@ -181,10 +131,13 @@
 <a id="join-btn" href="https://whatsapp.com/channel/0029VafyPeMADTOJIa3URu3u" target="_blank">Join us</a>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
 <script>
 (function () {
-  var PRELOAD_SEC = 10;
+  var PRELOAD_SEC  = 10;
+  var RETRY_BASE   = 3000;   // first retry after 3s
+  var RETRY_MAX    = 30000;  // cap at 30s
+  var FALLBACK_MS  = 18000;  // open gate after 18s if buffer never reaches 10s
 
   var ldBar    = document.getElementById('ld-bar');
   var ldStatus = document.getElementById('ld-status');
@@ -195,19 +148,18 @@
   var videoURL = params.get('x');
   if (!videoURL) { ldStatus.textContent = 'NO STREAM URL'; return; }
 
-  function setBar(pct) {
-    ldBar.classList.remove('idle');
-    ldBar.style.width = Math.min(100, pct) + '%';
-  }
+  /* ── Helpers ── */
+  function setBar(pct)    { ldBar.classList.remove('idle'); ldBar.style.width = Math.min(100, pct) + '%'; }
+  function setIdle()      { ldBar.classList.add('idle'); ldBar.style.width = '0%'; }
   function setStatus(txt) { ldStatus.textContent = txt; }
   function hideLoader()   { loader.classList.add('off'); }
 
-  /* ── FIX 1: cache-bust every m3u8 reload so Cloudflare doesn't serve stale playlist ── */
+  /* ── Custom playlist loader: adds ?_t=<now> to every m3u8 fetch ──
+     HLS.js does NOT retry 404 by default (4xx = unrecoverable by design).
+     This busts browser disk-cache so each retry hits the network fresh. ── */
   var CacheBustLoader = (function () {
-    function CacheBustLoader(config) {
-      this._loader = new Hls.DefaultConfig.loader(config);
-    }
-    CacheBustLoader.prototype.load = function (ctx, cfg, cbs) {
+    function L(config) { this._l = new Hls.DefaultConfig.loader(config); }
+    L.prototype.load = function (ctx, cfg, cbs) {
       if (ctx.type === 'manifest' || ctx.type === 'level') {
         try {
           var u = new URL(ctx.url);
@@ -217,139 +169,185 @@
           ctx.url = ctx.url.split('?')[0] + '?_t=' + Date.now();
         }
       }
-      this._loader.load(ctx, cfg, cbs);
+      this._l.load(ctx, cfg, cbs);
     };
-    CacheBustLoader.prototype.abort   = function () { this._loader.abort(); };
-    CacheBustLoader.prototype.destroy = function () { this._loader.destroy(); };
-    return CacheBustLoader;
+    L.prototype.abort   = function () { this._l.abort(); };
+    L.prototype.destroy = function () { this._l.destroy(); };
+    return L;
   }());
 
-  /* ── HLS.js ── */
-  var hls = new Hls({
-    pLoader: CacheBustLoader,           // bust m3u8 cache on every reload
+  /* ── State ── */
+  var hls         = null;
+  var player      = null;
+  var gateOpen    = false;
+  var fallbackT   = null;
+  var retryTimer  = null;
+  var retryDelay  = RETRY_BASE;
+  var mediaErrN   = 0;   // consecutive media error counter
 
-    /* FIX 2: bigger buffer → fewer stalls after gate opens */
-    maxBufferLength:             30,    // fill up to 30s ahead
-    maxMaxBufferLength:          120,
-    maxBufferSize:               60 * 1000 * 1000,
-    backBufferLength:            30,    // keep 30s behind current position
-    startFragPrefetch:           true,
-    enableWorker:                true,
-
-    /* live edge */
-    liveSyncDurationCount:       3,
-    liveMaxLatencyDurationCount: 10,
-    lowLatencyMode:              false,
-
-    /* stall recovery */
-    nudgeOffset:                 0.2,
-    nudgeMaxRetry:               30,
-    maxFragLookUpTolerance:      0.25,
-    highBufferWatchdogPeriod:    2,
-    maxStarvationDelay:          4,
-
-    abrEwmaDefaultEstimate:      500000,
-    startLevel:                  -1,
-    progressive:                 true,
-  });
-
-  hls.loadSource(videoURL);
-  hls.attachMedia(video);
-
-  /* ── Plyr ── */
-  var player = new Plyr(video, {
-    controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
-    autoplay:     false,        // we control start manually in openGate
-    muted:        false,
-    clickToPlay:  true,
-    hideControls: true,
-    quality: {
-      default: 720,
-      options: [1080, 720, 480, 360, 240],
-      forced: true,
-      onChange: function (q) {
-        var levels = hls.levels;
-        var idx = levels.findIndex(function (l) { return l.height === q; });
-        if (idx > -1) hls.nextLevel = idx;
-      }
-    }
-  });
-
-  /* ── Sync Plyr quality menu with HLS levels ── */
-  hls.on(Hls.Events.MANIFEST_PARSED, function (_, data) {
-    var heights = data.levels
-      .map(function (l) { return l.height; })
-      .filter(function (h, i, a) { return h && a.indexOf(h) === i; })
-      .sort(function (a, b) { return b - a; });
-
-    if (heights.length < 2) return;  // single-quality: skip quality menu entirely
-
-    player.quality = {
-      default: heights[0],
-      options: heights,
-      forced: true,
-      onChange: function (q) {
-        var idx = hls.levels.findIndex(function (l) { return l.height === q; });
-        if (idx > -1) hls.nextLevel = idx;
-      }
-    };
-  });
-
-  /* ── Gate: start buffering in background, reveal player when PRELOAD_SEC ready ── */
-  var gateOpen  = false;
-  var fallbackT = null;
-
+  /* ── Gate ── */
   function openGate() {
     if (gateOpen) return;
     gateOpen = true;
     clearTimeout(fallbackT);
     setBar(100);
-    setStatus('READY');
+    setStatus('LIVE');
     hideLoader();
-    /* FIX 3: use player.play() so Plyr updates its state and hides the overlaid button */
-    player.play();
+    // Use player.play() so Plyr's internal state updates and overlaid button disappears
+    player.play().catch(function () {});
+    // Unmute after play resolves (browser autoplay policy required mute)
+    setTimeout(function () { video.muted = false; player.muted = false; }, 200);
   }
 
-  hls.on(Hls.Events.MANIFEST_PARSED, function () {
-    video.muted = true;           // allow autoplay in browser
-    video.play().catch(function () {});   // start buffering silently
-    setBar(10);
-    setStatus('Buffering stream…');
+  /* ── HLS.js factory — destroy+recreate on each retry so state is clean ── */
+  function createHls() {
+    if (hls) {
+      hls.off(Hls.Events.MANIFEST_PARSED);
+      hls.off(Hls.Events.BUFFER_APPENDED);
+      hls.off(Hls.Events.ERROR);
+      hls.destroy();
+      hls = null;
+    }
+
+    hls = new Hls({
+      pLoader: CacheBustLoader,
+
+      /* manifest: fail immediately on 404 so our retry loop handles it */
+      manifestLoadingMaxRetry:    0,
+      manifestLoadingTimeOut:     8000,
+
+      /* fragment retries handled by HLS.js (non-fatal) */
+      fragLoadingMaxRetry:        6,
+      fragLoadingRetryDelay:      500,
+      fragLoadingMaxRetryTimeout: 8000,
+      levelLoadingMaxRetry:       4,
+
+      /* buffer — 30s ahead, 30s behind = smooth playback after gate opens */
+      maxBufferLength:            30,
+      maxMaxBufferLength:         120,
+      maxBufferSize:              60 * 1000 * 1000,
+      backBufferLength:           30,
+      startFragPrefetch:          true,
+      enableWorker:               true,
+
+      /* live edge — 3 segments (~18s) behind live, jump if > 10 segments behind */
+      liveSyncDurationCount:          3,
+      liveMaxLatencyDurationCount:    10,
+      lowLatencyMode:                 false,
+
+      /* stall recovery */
+      nudgeOffset:                0.2,
+      nudgeMaxRetry:              30,
+      maxFragLookUpTolerance:     0.25,
+      highBufferWatchdogPeriod:   2,
+      maxStarvationDelay:         4,
+
+      abrEwmaDefaultEstimate:     500000,
+      startLevel:                 -1,
+      progressive:                true,
+    });
+
+    hls.attachMedia(video);
+    hls.loadSource(videoURL);
+
+    /* ── Manifest ready: start silent buffering ── */
+    hls.on(Hls.Events.MANIFEST_PARSED, function (_, data) {
+      retryDelay = RETRY_BASE; // reset backoff on success
+      clearTimeout(retryTimer);
+      mediaErrN = 0;
+
+      /* update quality options in Plyr */
+      var heights = (data.levels || [])
+        .map(function (l) { return l.height; })
+        .filter(function (h, i, a) { return h && a.indexOf(h) === i; })
+        .sort(function (a, b) { return b - a; });
+
+      if (player && heights.length > 1) {
+        player.quality = {
+          default: heights[0],
+          options: heights,
+          forced:  true,
+          onChange: function (q) {
+            var idx = hls.levels.findIndex(function (l) { return l.height === q; });
+            if (idx > -1) hls.nextLevel = idx;
+          }
+        };
+      }
+
+      /* start buffering silently (muted satisfies browser autoplay policy) */
+      video.muted = true;
+      video.play().catch(function () {});
+      setBar(10);
+      setStatus('Buffering stream…');
+
+      /* fallback: open gate even if buffer never hits PRELOAD_SEC */
+      clearTimeout(fallbackT);
+      fallbackT = setTimeout(openGate, FALLBACK_MS);
+    });
+
+    /* ── Buffer tracking: hold loader until PRELOAD_SEC is ready ── */
+    hls.on(Hls.Events.BUFFER_APPENDED, function () {
+      if (gateOpen || !video.buffered.length) return;
+      var ahead = video.buffered.end(0) - (video.currentTime || 0);
+      var pct   = Math.min(98, 10 + (ahead / PRELOAD_SEC) * 88);
+      setBar(pct);
+      setStatus('Buffering ' + Math.round(ahead) + 's / ' + PRELOAD_SEC + 's…');
+      if (ahead >= PRELOAD_SEC) openGate();
+    });
+
+    /* ── Error handling ── */
+    hls.on(Hls.Events.ERROR, function (_, data) {
+      if (!data.fatal) return;
+      clearTimeout(fallbackT); // never open gate on a dead stream
+
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        /* 404 / offline: destroy + retry with exponential backoff */
+        var wait = Math.round(retryDelay / 1000);
+        setIdle();
+        setStatus('Stream offline — retry in ' + wait + 's…');
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(function () {
+          retryDelay = Math.min(retryDelay * 2, RETRY_MAX);
+          createHls();
+        }, retryDelay);
+
+      } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+        mediaErrN++;
+        if (mediaErrN <= 3) {
+          setStatus('Media error — recovering…');
+          hls.recoverMediaError();
+        } else {
+          /* too many media errors — full restart */
+          setIdle();
+          setStatus('Media error — restarting…');
+          retryTimer = setTimeout(createHls, 3000);
+        }
+      } else {
+        setStatus('Fatal error — refresh page');
+      }
+    });
+  }
+
+  /* ── Init Plyr once (wraps the <video> element permanently) ── */
+  player = new Plyr(video, {
+    controls:     ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+    autoplay:     false,
+    muted:        false,
+    clickToPlay:  true,
+    hideControls: true,
+    /* quality populated dynamically after MANIFEST_PARSED */
+    quality: { default: 720, options: [1080, 720, 480, 360, 240], forced: true, onChange: function () {} }
   });
 
-  hls.on(Hls.Events.BUFFER_APPENDED, function () {
-    if (gateOpen || !video.buffered.length) return;
-    var ahead = video.buffered.end(0) - (video.currentTime || 0);
-    var pct   = Math.min(98, 10 + (ahead / PRELOAD_SEC) * 88);
-    setBar(pct);
-    setStatus('Buffering ' + Math.round(ahead) + 's / ' + PRELOAD_SEC + 's…');
-    if (ahead >= PRELOAD_SEC) openGate();
-  });
-
-  /* After gate opens, unmute once user interacts (autoplay mute policy) */
+  /* Mark player-wrap during autoplay so CSS hides overlaid button */
+  video.setAttribute('data-autoloading', '1');
   player.on('play', function () {
-    if (gateOpen && video.muted) {
-      video.muted = false;
-      player.muted = false;
-    }
+    if (gateOpen) video.removeAttribute('data-autoloading');
   });
 
-  /* Fallback: open gate after 18s regardless */
-  fallbackT = setTimeout(openGate, 18000);
+  /* Start loading */
+  createHls();
 
-  /* ── Error handling ── */
-  hls.on(Hls.Events.ERROR, function (_, data) {
-    if (!data.fatal) return;
-    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-      setStatus('Network error — retrying…');
-      hls.startLoad();
-    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-      setStatus('Media error — recovering…');
-      hls.recoverMediaError();
-    } else {
-      setStatus('Stream error');
-    }
-  });
 })();
 </script>
 </body>
