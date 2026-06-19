@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
+  <title>Hello Sports Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:      #e8001d;
+      --red-glow: rgba(232,0,29,0.5);
+      --bg:       #040506;
+    }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      overflow: hidden;
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* ── Player fills viewport ── */
+    #player-wrap {
+      position: fixed; inset: 0;
+    }
+    #player-wrap video {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .plyr, .plyr--video {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ── Force hide overlaid play button while playing ── */
+    .plyr--playing .plyr__control--overlaid {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    /* Also hide it when we auto-start (browser may keep it visible on muted autoplay) */
+    .plyr__control--overlaid {
+      transition: opacity .2s, visibility .2s;
+    }
+
+    /* ── Loader ── */
+    #hx-loader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      transition: opacity .6s, visibility .6s;
+    }
+    #hx-loader.off { opacity: 0; visibility: hidden; }
+
+    .ld-logo {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      animation: float 2s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+    .ld-brand {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 44px; letter-spacing: 5px; color: #fff; line-height: 1;
+    }
+    .ld-brand .r { color: var(--red); }
+    .ld-domain {
+      font-size: 11px; font-weight: 600; letter-spacing: 5px;
+      color: rgba(255,255,255,.3); text-transform: uppercase;
+    }
+
+    .ld-bar-wrap {
+      width: 220px; height: 3px;
+      background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden;
+    }
+    .ld-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--red), #ff4d5e);
+      box-shadow: 0 0 12px var(--red-glow);
+      border-radius: 2px;
+      transition: width .4s ease;
+    }
+    .ld-bar.idle { animation: barSlide 1.8s ease-in-out infinite; }
+    @keyframes barSlide {
+      0%   { width: 0%;  margin-left: 0; }
+      50%  { width: 70%; margin-left: 0; }
+      100% { width: 0%;  margin-left: 100%; }
+    }
+
+    .ld-dots { display: flex; gap: 6px; }
+    .ld-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--red); animation: dotB 1.2s ease-in-out infinite;
+    }
+    .ld-dot:nth-child(2) { animation-delay: .2s; }
+    .ld-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes dotB {
+      0%,80%,100% { opacity: .2; transform: scale(.8); }
+      40%          { opacity: 1;  transform: scale(1.2); }
+    }
+
+    .ld-status {
+      font-size: 11px; font-weight: 600; letter-spacing: 3px;
+      color: rgba(200,208,218,.45); text-transform: uppercase;
+    }
+
+    /* ── Watermark ── */
+    #wm {
+      position: fixed; bottom: 62px; left: 50%; transform: translateX(-50%);
+      z-index: 200; pointer-events: none; user-select: none;
+      display: flex; align-items: center; gap: 8px;
+      opacity: .42; transition: opacity .5s;
+    }
+    :fullscreen #wm, :-webkit-full-screen #wm { opacity: .5; bottom: 70px; }
+    .wm-rule { width: 18px; height: 1px; background: linear-gradient(90deg, transparent, rgba(232,0,29,.7)); }
+    .wm-rule.r { background: linear-gradient(90deg, rgba(232,0,29,.7), transparent); }
+    .wm-inner { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .wm-name {
+      font-family: 'Bebas Neue', sans-serif; font-size: 14px;
+      letter-spacing: 4px; color: #fff;
+      text-shadow: 0 1px 8px #000, 0 0 24px rgba(0,0,0,.8);
+    }
+    .wm-name .r { color: var(--red); }
+    .wm-url {
+      font-size: 9px; font-weight: 600; letter-spacing: 3px;
+      color: rgba(255,255,255,.55);
+      text-shadow: 0 1px 6px rgba(0,0,0,.9);
+    }
+
+    /* ── Join button ── */
+    #join-btn {
+      position: fixed; top: 6px; left: 5px; z-index: 300;
+      display: block; height: 30px; width: 100px;
+      color: #ccc; border: 2px solid #ccc;
+      padding: 1px 0; border-radius: 2px;
+      text-align: center; text-decoration: none;
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      font-size: 13px; line-height: 26px; letter-spacing: 1px;
+      background: rgba(0,0,0,.35);
+      transition: color .2s, border-color .2s, background .2s;
+    }
+    #join-btn:hover { color: #fff; border-color: #fff; background: rgba(0,0,0,.55); }
+  </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="hx-loader">
+  <div class="ld-logo">
+    <div class="ld-brand">HELLO<span class="r">SPORTS</span></div>
+    <div class="ld-domain">hellosports.io</div>
+  </div>
+  <div class="ld-bar-wrap"><div class="ld-bar idle" id="ld-bar"></div></div>
+  <div class="ld-dots">
+    <div class="ld-dot"></div><div class="ld-dot"></div><div class="ld-dot"></div>
+  </div>
+  <div class="ld-status" id="ld-status">Connecting to stream…</div>
+</div>
+
+<!-- PLAYER -->
+<div id="player-wrap">
+  <video id="hx-video" playsinline></video>
+</div>
+
+<!-- WATERMARK -->
+<div id="wm">
+  <div class="wm-rule"></div>
+  <div class="wm-inner">
+    <div class="wm-name">HELLO<span class="r">SPORTS</span></div>
+    <div class="wm-url">hellosports.io</div>
+  </div>
+  <div class="wm-rule r"></div>
+</div>
+
+<!-- JOIN BUTTON -->
+<a id="join-btn" href="https://whatsapp.com/channel/0029VafyPeMADTOJIa3URu3u" target="_blank">Join us</a>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script src="https://cdn.plyr.io/3.7.8/plyr.min.js"></script>
+<script>
+(function () {
+  var PRELOAD_SEC = 10;
+
+  var ldBar    = document.getElementById('ld-bar');
+  var ldStatus = document.getElementById('ld-status');
+  var loader   = document.getElementById('hx-loader');
+  var video    = document.getElementById('hx-video');
+
+  var params   = new URLSearchParams(location.search);
+  var videoURL = params.get('x');
+  if (!videoURL) { ldStatus.textContent = 'NO STREAM URL'; return; }
+
+  function setBar(pct) {
+    ldBar.classList.remove('idle');
+    ldBar.style.width = Math.min(100, pct) + '%';
+  }
+  function setStatus(txt) { ldStatus.textContent = txt; }
+  function hideLoader()   { loader.classList.add('off'); }
+
+  /* ── FIX 1: cache-bust every m3u8 reload so Cloudflare doesn't serve stale playlist ── */
+  var CacheBustLoader = (function () {
+    function CacheBustLoader(config) {
+      this._loader = new Hls.DefaultConfig.loader(config);
+    }
+    CacheBustLoader.prototype.load = function (ctx, cfg, cbs) {
+      if (ctx.type === 'manifest' || ctx.type === 'level') {
+        try {
+          var u = new URL(ctx.url);
+          u.searchParams.set('_t', Date.now());
+          ctx.url = u.toString();
+        } catch (e) {
+          ctx.url = ctx.url.split('?')[0] + '?_t=' + Date.now();
+        }
+      }
+      this._loader.load(ctx, cfg, cbs);
+    };
+    CacheBustLoader.prototype.abort   = function () { this._loader.abort(); };
+    CacheBustLoader.prototype.destroy = function () { this._loader.destroy(); };
+    return CacheBustLoader;
+  }());
+
+  /* ── HLS.js ── */
+  var hls = new Hls({
+    pLoader: CacheBustLoader,           // bust m3u8 cache on every reload
+
+    /* FIX 2: bigger buffer → fewer stalls after gate opens */
+    maxBufferLength:             30,    // fill up to 30s ahead
+    maxMaxBufferLength:          120,
+    maxBufferSize:               60 * 1000 * 1000,
+    backBufferLength:            30,    // keep 30s behind current position
+    startFragPrefetch:           true,
+    enableWorker:                true,
+
+    /* live edge */
+    liveSyncDurationCount:       3,
+    liveMaxLatencyDurationCount: 10,
+    lowLatencyMode:              false,
+
+    /* stall recovery */
+    nudgeOffset:                 0.2,
+    nudgeMaxRetry:               30,
+    maxFragLookUpTolerance:      0.25,
+    highBufferWatchdogPeriod:    2,
+    maxStarvationDelay:          4,
+
+    abrEwmaDefaultEstimate:      500000,
+    startLevel:                  -1,
+    progressive:                 true,
+  });
+
+  hls.loadSource(videoURL);
+  hls.attachMedia(video);
+
+  /* ── Plyr ── */
+  var player = new Plyr(video, {
+    controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+    autoplay:     false,        // we control start manually in openGate
+    muted:        false,
+    clickToPlay:  true,
+    hideControls: true,
+    quality: {
+      default: 720,
+      options: [1080, 720, 480, 360, 240],
+      forced: true,
+      onChange: function (q) {
+        var levels = hls.levels;
+        var idx = levels.findIndex(function (l) { return l.height === q; });
+        if (idx > -1) hls.nextLevel = idx;
+      }
+    }
+  });
+
+  /* ── Sync Plyr quality menu with HLS levels ── */
+  hls.on(Hls.Events.MANIFEST_PARSED, function (_, data) {
+    var heights = data.levels
+      .map(function (l) { return l.height; })
+      .filter(function (h, i, a) { return h && a.indexOf(h) === i; })
+      .sort(function (a, b) { return b - a; });
+
+    if (heights.length < 2) return;  // single-quality: skip quality menu entirely
+
+    player.quality = {
+      default: heights[0],
+      options: heights,
+      forced: true,
+      onChange: function (q) {
+        var idx = hls.levels.findIndex(function (l) { return l.height === q; });
+        if (idx > -1) hls.nextLevel = idx;
+      }
+    };
+  });
+
+  /* ── Gate: start buffering in background, reveal player when PRELOAD_SEC ready ── */
+  var gateOpen  = false;
+  var fallbackT = null;
+
+  function openGate() {
+    if (gateOpen) return;
+    gateOpen = true;
+    clearTimeout(fallbackT);
+    setBar(100);
+    setStatus('READY');
+    hideLoader();
+    /* FIX 3: use player.play() so Plyr updates its state and hides the overlaid button */
+    player.play();
+  }
+
+  hls.on(Hls.Events.MANIFEST_PARSED, function () {
+    video.muted = true;           // allow autoplay in browser
+    video.play().catch(function () {});   // start buffering silently
+    setBar(10);
+    setStatus('Buffering stream…');
+  });
+
+  hls.on(Hls.Events.BUFFER_APPENDED, function () {
+    if (gateOpen || !video.buffered.length) return;
+    var ahead = video.buffered.end(0) - (video.currentTime || 0);
+    var pct   = Math.min(98, 10 + (ahead / PRELOAD_SEC) * 88);
+    setBar(pct);
+    setStatus('Buffering ' + Math.round(ahead) + 's / ' + PRELOAD_SEC + 's…');
+    if (ahead >= PRELOAD_SEC) openGate();
+  });
+
+  /* After gate opens, unmute once user interacts (autoplay mute policy) */
+  player.on('play', function () {
+    if (gateOpen && video.muted) {
+      video.muted = false;
+      player.muted = false;
+    }
+  });
+
+  /* Fallback: open gate after 18s regardless */
+  fallbackT = setTimeout(openGate, 18000);
+
+  /* ── Error handling ── */
+  hls.on(Hls.Events.ERROR, function (_, data) {
+    if (!data.fatal) return;
+    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+      setStatus('Network error — retrying…');
+      hls.startLoad();
+    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+      setStatus('Media error — recovering…');
+      hls.recoverMediaError();
+    } else {
+      setStatus('Stream error');
+    }
+  });
+})();
+</script>
+</body>
+</html>
