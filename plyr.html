@@ -2,155 +2,255 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="referrer" content="no-referrer">
   <title>Hello Sports Player</title>
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.6.2/plyr.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-    }
-    .player-wrap {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      position: relative;
-    }
-    .player-wrap video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      background: #000;
-    }
-    .plyr--video .plyr__control--overlaid {
-      left: 50% !important;
-      top: 50% !important;
-      transform: translate(-50%, -50%) !important;
-    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--red:#e8001d;--bg:#040506}
+    html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;font-family:'Rajdhani',sans-serif}
 
-    /* ── HELLOSPORTS watermark ── */
-    #hx-watermark {
-      position: absolute;
-      left: 50%;
-      bottom: 62px;
-      transform: translateX(-50%);
-      z-index: 5;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      opacity: 0.42;
-      pointer-events: none;
-      transition: opacity .3s, bottom .3s;
-      font-family: 'Rajdhani', sans-serif;
-      text-align: center;
+    .player-wrap{width:100%;height:100%;background:#000;position:relative}
+    .player-wrap video{width:100%;height:100%;object-fit:contain;background:#000}
+    .plyr,.plyr--video{width:100%!important;height:100%!important;
+      --plyr-color-main:var(--red);--plyr-font-family:'Rajdhani',sans-serif}
+
+    /* Hide overlaid play button during muted autoplay */
+    .plyr__control--overlaid{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+    .plyr--paused:not([data-loading]) .plyr__control--overlaid{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+
+    /* Watermark — DO NOT MODIFY */
+    #hx-watermark{
+      position:absolute;left:50%;bottom:62px;transform:translateX(-50%);
+      z-index:5;display:flex;align-items:center;gap:8px;
+      opacity:0.42;pointer-events:none;transition:opacity .3s,bottom .3s;
+      font-family:'Rajdhani',sans-serif;text-align:center
     }
-    #hx-watermark .wm-rule {
-      width: 18px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #e8001d);
-    }
-    #hx-watermark .wm-rule.right {
-      background: linear-gradient(90deg, #e8001d, transparent);
-    }
-    #hx-watermark .wm-text { display: flex; flex-direction: column; align-items: center; }
-    #hx-watermark .wm-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 14px;
-      letter-spacing: 4px;
-      color: #fff;
-    }
-    #hx-watermark .wm-name .r { color: #e8001d; }
-    #hx-watermark .wm-url {
-      font-size: 9px;
-      letter-spacing: 3px;
-      color: #c8d0da;
-      margin-top: 2px;
-    }
+    #hx-watermark .wm-rule{width:18px;height:1px;background:linear-gradient(90deg,transparent,#e8001d)}
+    #hx-watermark .wm-rule.right{background:linear-gradient(90deg,#e8001d,transparent)}
+    #hx-watermark .wm-text{display:flex;flex-direction:column;align-items:center}
+    #hx-watermark .wm-name{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:4px;color:#fff}
+    #hx-watermark .wm-name .r{color:#e8001d}
+    #hx-watermark .wm-url{font-size:9px;letter-spacing:3px;color:#c8d0da;margin-top:2px}
     .plyr:fullscreen #hx-watermark,
-    .plyr:-webkit-full-screen #hx-watermark {
-      bottom: 70px;
-      opacity: 0.5;
+    .plyr:-webkit-full-screen #hx-watermark{bottom:70px;opacity:0.5}
+
+    /* Loader overlay */
+    #hx-loader{
+      position:fixed;inset:0;z-index:9999;background:var(--bg);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+      transition:opacity .6s,visibility .6s
     }
+    #hx-loader.off{opacity:0;visibility:hidden}
+    .ld-logo{display:flex;flex-direction:column;align-items:center;gap:4px;animation:float 2s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    .ld-brand{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:5px;color:#fff;line-height:1}
+    .ld-brand .r{color:var(--red)}
+    .ld-domain{font-size:11px;font-weight:600;letter-spacing:5px;color:rgba(255,255,255,.3);text-transform:uppercase}
+    .ld-bar-wrap{width:220px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+    .ld-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--red),#ff4d5e);
+      box-shadow:0 0 12px rgba(232,0,29,0.5);border-radius:2px;transition:width .4s ease}
+    .ld-bar.idle{animation:barSlide 1.8s ease-in-out infinite}
+    @keyframes barSlide{0%{width:0%;margin-left:0}50%{width:70%;margin-left:0}100%{width:0%;margin-left:100%}}
+    .ld-dots{display:flex;gap:6px}
+    .ld-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:dotB 1.2s ease-in-out infinite}
+    .ld-dot:nth-child(2){animation-delay:.2s}.ld-dot:nth-child(3){animation-delay:.4s}
+    @keyframes dotB{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1.2)}}
+    .ld-status{font-size:11px;font-weight:600;letter-spacing:3px;color:rgba(200,208,218,.45);text-transform:uppercase}
   </style>
 </head>
 <body>
-  <div class="player-wrap">
-    <video id="player" controls playsinline webkit-playsinline preload="metadata"></video>
+
+<div id="hx-loader">
+  <div class="ld-logo">
+    <div class="ld-brand">HELLO<span class="r">SPORTS</span></div>
+    <div class="ld-domain">hellosports.live</div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.plyr.io/3.6.2/plyr.polyfilled.js"></script>
-  <script>
-    (function () {
-      const video = document.getElementById('player');
-      const params = new URLSearchParams(location.search);
-      const videoURL = params.get('x');
-      if (!videoURL) return;
+  <div class="ld-bar-wrap"><div class="ld-bar idle" id="ld-bar"></div></div>
+  <div class="ld-dots">
+    <div class="ld-dot"></div><div class="ld-dot"></div><div class="ld-dot"></div>
+  </div>
+  <div class="ld-status" id="ld-status">Connecting to stream...</div>
+</div>
 
-      function addWatermark(player) {
-        const wm = document.createElement('div');
-        wm.id = 'hx-watermark';
-        wm.innerHTML =
-          '<span class="wm-rule"></span>' +
-          '<span class="wm-text">' +
-            '<span class="wm-name">HELLO<span class="r">SPORTS</span></span>' +
-            '<span class="wm-url">hellosports.io</span>' +
-          '</span>' +
-          '<span class="wm-rule right"></span>';
-        player.elements.container.appendChild(wm);
-      }
+<div class="player-wrap" id="player-wrap" data-loading="1">
+  <video id="player" playsinline webkit-playsinline></video>
+</div>
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        video.src = videoURL;
-        const player = new Plyr(video, {
-          fullscreen: { enabled: true, fallback: true, iosNative: true }
-        });
-        addWatermark(player);
-        return;
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+<script>
+(function(){
+  var PRELOAD=10, RETRY_BASE=3000, RETRY_MAX=30000, FALLBACK=18000;
+  var ldBar=document.getElementById('ld-bar');
+  var ldStatus=document.getElementById('ld-status');
+  var loader=document.getElementById('hx-loader');
+  var wrap=document.getElementById('player-wrap');
+  var video=document.getElementById('player');
+  var params=new URLSearchParams(location.search);
+  var videoURL=params.get('x')||params.get('watchasports')||null;
+
+  function setBar(p){ldBar.classList.remove('idle');ldBar.style.width=Math.min(100,p)+'%';}
+  function setIdle(){ldBar.classList.add('idle');ldBar.style.width='0%';}
+  function setStatus(t){ldStatus.textContent=t;}
+  function hideLoader(){loader.classList.add('off');}
+
+  if(!videoURL){setStatus('NO STREAM URL - use ?x=');return;}
+
+  /* CacheBustLoader: unique ?_t= per m3u8 fetch = Cloudflare cache miss every time */
+  var CacheBustLoader=(function(){
+    function L(cfg){this._l=new Hls.DefaultConfig.loader(cfg);}
+    L.prototype.load=function(ctx,cfg,cbs){
+      if(ctx.type==='manifest'||ctx.type==='level'){
+        try{var u=new URL(ctx.url);u.searchParams.set('_t',Date.now());ctx.url=u.toString();}
+        catch(e){ctx.url=ctx.url.split('?')[0]+'?_t='+Date.now();}
       }
-      if (!Hls.isSupported()) return;
-      const hls = new Hls();
-      hls.loadSource(videoURL);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, function () {
-        const qualities = [];
-        hls.levels.forEach(function (level) {
-          if (!qualities.includes(level.height)) qualities.push(level.height);
-        });
-        qualities.sort(function (a, b) { return b - a; });
-        const player = new Plyr(video, {
-          settings: ['quality', 'speed', 'fullscreen'],
-          fullscreen: { enabled: true, fallback: true, iosNative: true },
-          quality: {
-            default: qualities[0] || 720,
-            options: qualities,
-            forced: true,
-            onChange: function (q) {
-              hls.levels.forEach(function (level, index) {
-                if (level.height === q) hls.currentLevel = index;
-              });
-            }
-          }
-        });
-        addWatermark(player);
-        document.addEventListener('fullscreenchange', () => {
-          if (document.fullscreenElement && screen.orientation?.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-          } else if (screen.orientation?.unlock) {
-            screen.orientation.unlock();
-          }
-        });
-        video.addEventListener('click', function () {
-          if (player.playing) player.pause();
-          else player.play();
-        });
-      });
-    })();
-  </script>
+      this._l.load(ctx,cfg,cbs);
+    };
+    L.prototype.abort=function(){this._l.abort();};
+    L.prototype.destroy=function(){this._l.destroy();};
+    return L;
+  }());
+
+  var hls=null,player=null,gateOpen=false,fallbackT=null,retryTimer=null;
+  var retryDelay=RETRY_BASE,mediaErrN=0;
+
+  function addWatermark(){
+    if(!player||!player.elements||!player.elements.container)return;
+    if(document.getElementById('hx-watermark'))return;
+    var wm=document.createElement('div');
+    wm.id='hx-watermark';
+    wm.innerHTML=
+      '<span class="wm-rule"></span>'+
+      '<span class="wm-text">'+
+        '<span class="wm-name">HELLO<span class="r">SPORTS</span></span>'+
+        '<span class="wm-url">hellosports.live</span>'+
+      '</span>'+
+      '<span class="wm-rule right"></span>';
+    player.elements.container.appendChild(wm);
+  }
+
+  function openGate(){
+    if(gateOpen)return;
+    gateOpen=true;
+    clearTimeout(fallbackT);
+    wrap.removeAttribute('data-loading');
+    setBar(100);setStatus('LIVE');hideLoader();
+    player.play().catch(function(){});
+    setTimeout(function(){video.muted=false;player.muted=false;},250);
+  }
+
+  function createHls(){
+    if(hls){
+      try{
+        hls.off(Hls.Events.MANIFEST_PARSED);
+        hls.off(Hls.Events.BUFFER_APPENDED);
+        hls.off(Hls.Events.ERROR);
+      }catch(e){}
+      hls.destroy();hls=null;
+    }
+
+    hls=new Hls({
+      pLoader:CacheBustLoader,
+      manifestLoadingMaxRetry:0,manifestLoadingTimeOut:8000,
+      fragLoadingMaxRetry:6,fragLoadingRetryDelay:500,fragLoadingMaxRetryTimeout:8000,
+      levelLoadingMaxRetry:4,
+      maxBufferLength:30,maxMaxBufferLength:120,maxBufferSize:60*1000*1000,
+      backBufferLength:30,startFragPrefetch:true,enableWorker:true,
+      liveSyncDurationCount:3,liveMaxLatencyDurationCount:10,lowLatencyMode:false,
+      nudgeOffset:0.2,nudgeMaxRetry:30,maxFragLookUpTolerance:0.25,
+      highBufferWatchdogPeriod:2,maxStarvationDelay:4,
+      abrEwmaDefaultEstimate:500000,startLevel:-1,progressive:true,
+    });
+    hls.attachMedia(video);
+    hls.loadSource(videoURL);
+
+    hls.on(Hls.Events.MANIFEST_PARSED,function(_,data){
+      retryDelay=RETRY_BASE;clearTimeout(retryTimer);mediaErrN=0;
+      var h=(data.levels||[]).map(function(l){return l.height;})
+        .filter(function(h,i,a){return h&&a.indexOf(h)===i;})
+        .sort(function(a,b){return b-a;});
+      if(player&&h.length>1){
+        player.quality={default:h[0],options:h,forced:true,
+          onChange:function(q){
+            var i=hls.levels.findIndex(function(l){return l.height===q;});
+            if(i>-1)hls.nextLevel=i;
+          }};
+      }
+      addWatermark();
+      video.muted=true;
+      video.play().catch(function(){});
+      setBar(10);setStatus('Buffering stream...');
+      clearTimeout(fallbackT);
+      fallbackT=setTimeout(openGate,FALLBACK);
+    });
+
+    hls.on(Hls.Events.BUFFER_APPENDED,function(){
+      if(gateOpen||!video.buffered.length)return;
+      var ahead=video.buffered.end(0)-(video.currentTime||0);
+      setBar(Math.min(98,10+(ahead/PRELOAD)*88));
+      setStatus('Buffering '+Math.round(ahead)+'s / '+PRELOAD+'s...');
+      if(ahead>=PRELOAD)openGate();
+    });
+
+    hls.on(Hls.Events.ERROR,function(_,data){
+      if(!data.fatal)return;
+      clearTimeout(fallbackT);
+      if(data.type===Hls.ErrorTypes.NETWORK_ERROR){
+        setIdle();
+        setStatus('Stream offline - retry in '+Math.round(retryDelay/1000)+'s...');
+        clearTimeout(retryTimer);
+        retryTimer=setTimeout(function(){
+          retryDelay=Math.min(retryDelay*2,RETRY_MAX);createHls();
+        },retryDelay);
+      } else if(data.type===Hls.ErrorTypes.MEDIA_ERROR){
+        mediaErrN++;
+        if(mediaErrN<=3){setStatus('Media error - recovering...');hls.recoverMediaError();}
+        else{setIdle();setStatus('Media error - restarting...');
+          retryTimer=setTimeout(function(){mediaErrN=0;createHls();},3000);}
+      } else {
+        setStatus('Fatal error - refresh page');
+      }
+    });
+  }
+
+  /* iOS: native HLS */
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS){
+    video.src=videoURL;
+    player=new Plyr(video,{
+      fullscreen:{enabled:true,fallback:true,iosNative:true}
+    });
+    addWatermark();
+    hideLoader();
+    return;
+  }
+
+  if(!Hls.isSupported()){setStatus('HLS not supported in this browser');return;}
+
+  player=new Plyr(video,{
+    controls:['play','progress','current-time','mute','volume','fullscreen'],
+    autoplay:false,muted:false,clickToPlay:true,hideControls:true,
+    fullscreen:{enabled:true,fallback:true,iosNative:true},
+    quality:{default:720,options:[1080,720,480,360,240],forced:true,onChange:function(){}}
+  });
+
+  player.on('play',function(){
+    if(gateOpen&&video.muted){video.muted=false;player.muted=false;}
+  });
+
+  document.addEventListener('fullscreenchange',function(){
+    if(document.fullscreenElement&&screen.orientation&&screen.orientation.lock){
+      screen.orientation.lock('landscape').catch(function(){});
+    } else if(screen.orientation&&screen.orientation.unlock){
+      screen.orientation.unlock();
+    }
+  });
+
+  createHls();
+}());
+</script>
 </body>
 </html>
