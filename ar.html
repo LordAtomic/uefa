@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="unsafe-url">
+    <title>ArtPlayer</title>
+    <script>
+        (function() {
+            function getParam(name) {
+                return new URLSearchParams(window.location.search).get(name) || "";
+            }
+            var isLiveStream = getParam("live") !== "0";
+            var playerTitle = getParam("title");
+            var pageTitle = playerTitle || "LivePlayer";
+            if (pageTitle) document.title = pageTitle;
+            window.PLAYER_MATCH_INFO = {
+                title: pageTitle,
+                isLive: isLiveStream,
+            };
+        })();
+    </script>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .artplayer-app {
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="artplayer-app"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js/dist/hls.min.js"></script>
+    <script>
+        function getQueryParam(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
+        const streamUrl = getQueryParam("url") || "";
+        const playerInfo = window.PLAYER_MATCH_INFO || {};
+        const isLiveStream = playerInfo.isLive !== false;
+        const playerTitle = playerInfo.title || "";
+        const pageTitle = playerTitle || "LivePlayer";
+        if (pageTitle) document.title = pageTitle;
+        window.PLAYER_MATCH_INFO = {
+            title: pageTitle,
+            isLive: isLiveStream,
+        };
+
+        if (streamUrl && streamUrl.includes("qq.html")) {
+            window.location.replace(streamUrl);
+        }
+
+        async function fetchRealUrl(url) {
+            try {
+                const res = await fetch(url, { referrerPolicy: "unsafe-url" });
+                const text = await res.text();
+                if (text.includes("#EXT-X-STREAM-INF")) {
+                    const lines = text.split('\n');
+                    for (let line of lines) {
+                        line = line.trim();
+                        if (line && !line.startsWith('#')) {
+                            return line.startsWith('http') ? line : new URL(line, url).href;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Pre-fetch failed, fallback to original url", e);
+            }
+            return url;
+        }
+
+        async function initPlayer() {
+            const finalUrl = await fetchRealUrl(streamUrl);
+
+            const art = new Artplayer({
+                container: ".artplayer-app",
+                url: finalUrl,
+                isLive: isLiveStream,
+                autoSize: true,
+                fullscreen: true,
+                fullscreenWeb: true,
+                setting: true,
+                pip: true,
+                playbackRate: true,
+                aspectRatio: true,
+                autoOrientation: true,
+                lock: true,
+                fastForward: true,
+                autoplay: false,
+                muted: false,
+                moreVideoAttr: {
+                    playsinline: true,
+                    "webkit-playsinline": true,
+                    "x5-video-player-type": "h5-page",
+                    referrerpolicy: "unsafe-url",
+                },
+                theme: "#fb5621",
+                customType: {
+                    m3u8(video, url, artInstance) {
+                        if (Hls.isSupported()) {
+                            const hls = new Hls(isLiveStream ? {
+                                autoStartLoad: false,
+                                startPosition: -1,
+                                liveSyncDurationCount: 3,
+                                liveMaxLatencyDurationCount: 6,
+                                maxBufferLength: 30,
+                                maxMaxBufferLength: 60,
+                                maxBufferSize: 30 * 1000 * 1000,
+                                lowLatencyMode: false,
+                            } : {
+                                autoStartLoad: true,
+                                maxBufferLength: 60,
+                                maxMaxBufferLength: 120,
+                                maxBufferSize: 60 * 1000 * 1000,
+                                lowLatencyMode: false,
+                            });
+                            hls.loadSource(url);
+                            hls.attachMedia(video);
+                            if (isLiveStream) {
+                                artInstance.once("play", () => hls.startLoad(-1));
+                            }
+                            return;
+                        }
+                        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+                            video.src = url;
+                        }
+                    },
+                },
+            });
+
+            document.querySelector(".artplayer-app").style.opacity = "1";
+            art.on("video:error", () => console.error("player load failed"));
+        }
+
+        initPlayer();
+    </script>
+    <script>
+        (function() {
+            var script = document.createElement("script");
+            script.src = "../../js/adconfig.js?v=" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+            script.defer = true;
+            document.head.appendChild(script);
+        })();
+    </script>
+    <!-- DM_TONGJI -->
+
+</body>
+</html>
