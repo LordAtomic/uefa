@@ -244,10 +244,6 @@
         }
       });
 
-      player.getNetworkingEngine().registerRequestFilter((type, req) => {
-        req.headers['Referer'] = 'https://livedakho.pages.dev/';
-        req.headers['User-Agent'] = 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36';
-      });
 
       try {
         await player.load(STREAM_URL);
